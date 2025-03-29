@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Handwriting Recognition Demo</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .upload-section {
+      margin: 20px 0;
+    }
+    input[type="file"] {
+      margin: 10px 0;
+      padding: 6px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .preview {
+      margin-top: 20px;
+      max-width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      display: none;
+    }
+    .result-section {
+      margin-top: 30px;
+      padding: 20px;
+      background: #e9ecef;
+      border-radius: 4px;
+    }
+    .result-section h2 {
+      margin: 0 0 10px;
+      color: #333;
+    }
+    .result-section p {
+      font-size: 1.2rem;
+      color: #007bff;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Handwriting Recognition Demo</h1>
+    <div class="upload-section">
+      <input type="file" id="fileInput" accept="image/*">
+      <br>
+      <img id="previewImage" class="preview" alt="Image Preview">
+      <br>
+      <button id="predictButton">Predict</button>
+    </div>
+    <div class="result-section">
+      <h2>Recognized Text</h2>
+      <p id="recognizedText">Awaiting prediction...</p>
+    </div>
+  </div>
+  
+  <script>
+    // Get DOM elements.
+    const fileInput = document.getElementById('fileInput');
+    const previewImage = document.getElementById('previewImage');
+    const predictButton = document.getElementById('predictButton');
+    const recognizedTextEl = document.getElementById('recognizedText');
+
+    // Show image preview upon file selection.
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previewImage.src = e.target.result;
+          previewImage.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        previewImage.style.display = 'none';
+      }
+    });
+
+    // Trigger prediction on button click.
+    predictButton.addEventListener('click', () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        alert('Please select an image file.');
+        return;
+      }
+      
+      const formData = new FormData();
+      // Append file with an arbitrary key; our backend accepts the first file.
+      formData.append('upload', file);
+
+      fetch('/predict', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        recognizedTextEl.textContent = data.recognized_text || 'No text recognized';
+      })
+      .catch(err => {
+        recognizedTextEl.textContent = 'Error retrieving prediction.';
+        console.error(err);
+      });
+    });
+  </script>
+</body>
+</html>
